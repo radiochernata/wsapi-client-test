@@ -1,9 +1,10 @@
-use std::io::{stdout, Write};
+//use std::io::{stdout, Write};
 use std::fs::File;
 //use curl::easy::Easy;
 use serde::Deserialize;
-use hyper::body;
-use hyper::{client, Uri};
+use hyper::client::Client;
+use hyper::body::HttpBody as _;
+use tokio::io::{stdout, AsyncWriteExt as _};
 
 #[derive(Deserialize, Debug)]
 struct Service{
@@ -16,7 +17,8 @@ struct Config {
     services: Vec<Service>,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let config_open_result = File::open("config.yml").expect("Could not open file.");
     let config: Config = serde_yaml::from_reader(config_open_result).unwrap();
 
@@ -24,42 +26,31 @@ fn main() {
 
     for service in config.services {
         match service.name.as_str() {
-            "dhl" => get_dhllabel(service.url.as_str(), "nata"),
-            "post" => get_postlabel(service.url.as_str(), "tatiana"),
+            "dhl" => get_label(service.url.as_str(), "nata").await?,
+            "post" => get_label(service.url.as_str(), "tatiana").await?,
             _ => println!("Unknown service"),
         }
     }
-
+    Ok(())
 }
 
-fn get_dhllabel(url: &str, labelname: &str) {
-    // let mut easy = Easy::new();
-    // easy.url(format!("{}{}", url, labelname).as_str()).unwrap();
-    // easy.write_function(|data| {
-    //     stdout().write_all(data).unwrap();
-    //     Ok(data.len())
-    // }).unwrap();
-    // easy.perform().unwrap();
+async fn get_label(url: &str, labelname: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client = Client::new();
 
-    let client = client::new();
+    let uri = format!("{}{}", url, labelname).parse()?;
 
-    let res = client.get(Uri::from_static(format!("{}{}", url, labelname).as_str())).unwrap();
+    // Await the response...
+    let mut resp = client.get(uri).await?;
 
-    // And then, if the request gets a response...
-    println!("status: {}", res.status());
+    println!("Response: {}", resp.status());
+    match resp.status() {
+        hyper::StatusCode::OK => {
+            while let Some(chunk) = resp.body_mut().data().await {
+                stdout().write_all(&chunk?).await?;
+            }
+        },
+        _ => println!("Not OK"),
+    }
 
-    // Concatenate the body stream into a single buffer...
-    let buf = body::to_bytes(res).unwrap();
-
-    println!("body: {:?}", buf);
-}
-
-fn get_postlabel(url: &str, labelname: &str) {
-    // let mut easy = Easy::new();
-    // easy.url(format!("{}{}", url, labelname).as_str()).unwrap();
-    // easy.write_function(|data| {
-    //     stdout().write_all(data).unwrap();
-    //     Ok(data.len())
-    // }).unwrap();
-    // easy.perform().unwrap();
+    Ok(())
 }

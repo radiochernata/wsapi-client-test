@@ -9,6 +9,5 @@ edition = "2021"
 curl = "0.4.35"
 serde = {version = "1.0", features = ["derive"]}
 serde_yaml = "0.8"
-hyper = { version = "1.0.0-rc.3", features = ["client"] }
+hyper = { version = "0.14", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
-http-body-util = "0.1.0-rc.2"
