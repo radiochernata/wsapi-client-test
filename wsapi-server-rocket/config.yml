@@ -1,0 +1,13 @@
+host: localhost
+port: 8081
+
+routes:
+- route:
+  url: /post/
+  service: post
+  method: GET
+- route: 
+  url: /dhl/
+  service: dhl
+  method: GET
+  action: get_dhllabel
