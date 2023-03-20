@@ -1,9 +1,8 @@
-//use std::io::{stdout, Write};
+ //use std::io::{stdout, Write};
 use std::fs::File;
-//use curl::easy::Easy;
 use serde::Deserialize;
-use hyper::client::Client;
-use hyper::body::HttpBody as _;
+//use hyper::client::Client;
+//use hyper::body::HttpBody as _;
 use tokio::io::{stdout, AsyncWriteExt as _};
 
 #[derive(Deserialize, Debug)]
@@ -18,7 +17,7 @@ struct Config {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn main() -> Result<(), reqwest::Error> {
     let config_open_result = File::open("config.yml").expect("Could not open file.");
     let config: Config = serde_yaml::from_reader(config_open_result).unwrap();
 
@@ -34,21 +33,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     Ok(())
 }
 
-async fn get_label(url: &str, labelname: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let client = Client::new();
-
-    let uri = format!("{}{}", url, labelname).parse()?;
+async fn get_label(url: &str, labelname: &str) -> Result<(), reqwest::Error> {
+    let uri = format!("{}{}", url, labelname);
 
     // Await the response...
-    let mut resp = client.get(uri).await?;
+    let mut resp = reqwest::get(uri).await?;
 
     println!("Response: {}", resp.status());
     match resp.status() {
-        hyper::StatusCode::OK => {
-            while let Some(chunk) = resp.body_mut().data().await {
-                stdout().write_all(&chunk?).await?;
-            }
-        },
+        reqwest::StatusCode::OK => {
+            let body = resp.text().await?;
+            println!("{}", body)
+            },
         _ => println!("Not OK"),
     }
 
