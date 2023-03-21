@@ -1,0 +1,4 @@
+{
+    "title": "{{title | replace(from='My', to='Nata')}}",
+    "body": "{{body | replace(from='my', to='Nata')}}"
+}
