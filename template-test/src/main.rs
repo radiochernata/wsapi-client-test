@@ -9,6 +9,7 @@ struct MyPage
     my_body: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct MyAddress
 {
     my_first_name: String,
@@ -40,6 +41,13 @@ fn use_template_page(page: MyPage) -> Result<String, tera::Error> {
     Ok(rendered)
 }
 
+fn use_template_address(address: MyAddress) -> Result<String, tera::Error> {
+    let mut tera = Tera::default();
+    tera.add_template_file(Path::new("address.json"), None)?;
+    let rendered = tera.render("address.json", &Context::from_serialize(json_address(address))?)?;
+    Ok(rendered)
+}
+
 fn main() -> tera::Result<()> {
     let my_page = MyPage{my_title: String::from("My Page"), 
                          my_body: String::from("Welcome to my page!")};
@@ -51,6 +59,7 @@ fn main() -> tera::Result<()> {
                                my_post_code: String::from("NW1 6XE")};
 
     println!("{}", use_template_page(my_page)?);
-    println!("{}", json_address(my_address));
+    println!("{}", json_address(my_address.clone()));
+    println!("{}", use_template_address(my_address)?);
     Ok(())
 }
