@@ -1,4 +1,11 @@
 {
-    "name": "{{name}}",
-    "address": "{{address}}"
+    "title": "{{label}}"
+    "addresses": [
+        {% for address in addresses %}
+            {
+                "name": "{{ address.name }}",
+                "address": "{{ address.address }}"
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
 }

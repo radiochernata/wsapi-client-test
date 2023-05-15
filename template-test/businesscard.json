@@ -2,5 +2,7 @@
     "name": "{{name}}",
     "phone": "{{phone}}",
     "email": "{{email}}",
-    "{% if fax is defined %}fax": "{{fax}}{% endif %}"
+{% if fax is defined %}
+    "fax": "{{fax}}"
+{% endif %}
 }
